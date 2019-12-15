@@ -3,12 +3,16 @@ import numpy as np
 
 # noinspection PyMethodMayBeStatic
 class Neuron:
-    def __init__(self, activation='heaviside', learning_rate=0.01):
+    def __init__(self, activation='heaviside', learning_rate=0.01, inputs_number=3):
         # seeding for random number generation
         np.random.seed(1)
-        self.weights = np.random.uniform(0, 1, 3)
+        self.weights = np.random.uniform(0, 1, inputs_number)
         self.learning_rate = learning_rate
         self.activation_function = getattr(self, activation)
+        self.input = []
+        self.adjustment = []
+        self.error = []
+        self.calculated = []
 
     def sigmoid(self, x, derivative=False):
         if not derivative:
@@ -75,16 +79,30 @@ class Neuron:
             else:
                 return 0.01
 
-    def train(self, training_inputs, training_outputs, training_iterations):
-        for _ in range(training_iterations):
-            for input_val, output in zip(training_inputs, training_outputs):
-                calculated = self.predict(self.weights @ input_val)
-                error = output - calculated
-                adjustments = self.learning_rate * error * self.activation_function(self.weights @ input_val, True) * input_val
-                self.weights += adjustments
+    def train(self, training_inputs, training_outputs):
+        for input_val, output in zip(training_inputs, training_outputs):
+            calculated = self.predict(self.weights @ input_val)
+            error = output - calculated
+            adjustments = self.learning_rate * error * self.activation_function(self.weights @ input_val, True) * input_val
+            self.weights += adjustments
 
     def predict(self, ins):
+        self.input = ins
+        ins = self.weights @ ins
         # passing the inputs via the neuron to get output
         ins = ins.astype(float)
-        output = self.activation_function(ins)
-        return output
+        self.calculated = self.activation_function(ins)
+        return self.calculated
+
+    def calculate_basic_adjustment(self, target):  # For the last layer
+        self.error = target - self.calculated
+        self.adjustment = self.learning_rate * self.error * self.activation_function(self.weights @ self.input, True) * self.input
+
+    def calculate_adjustment(self, upper_neurons, neuron_number):  # For hidden layers
+        self.error = 0
+        for neuron in upper_neurons:
+            self.error += neuron.weights[neuron_number] * neuron.activation_function(neuron.weights @ neuron.input) * neuron.error
+        self.adjustment = self.learning_rate * self.error * self.activation_function(self.weights @ self.input, True) * self.input
+
+    def apply_changes(self):
+        self.weights += self.adjustment

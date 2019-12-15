@@ -14,7 +14,7 @@ def generate_plot(x):
     return plt.gcf()
 
 
-def draw_decision_surface(neuron, x_min, x_max, y_min, y_max, num_of_x=200):
+def draw_decision_surface(network, x_min, x_max, y_min, y_max, num_of_x=200):
     num_of_x = int(num_of_x)
     # Create test set (surface)
     x0, x1 = np.meshgrid(np.linspace(x_min, x_max, num_of_x), np.linspace(y_min, y_max, num_of_x))
@@ -23,7 +23,7 @@ def draw_decision_surface(neuron, x_min, x_max, y_min, y_max, num_of_x=200):
     for i in range(num_of_x):
         for j in range(num_of_x):
             classification_plane[i, j] = np.around(
-                neuron.predict(neuron.weights @ np.asmatrix([1, x0[i, j], x1[i, j]]).T))
+                network.predict(np.array([1, x0[i, j], x1[i, j]])))
     # Create color map
     cmap = ListedColormap([
         colorConverter.to_rgba('r', alpha=0.3),
